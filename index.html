@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quests">
+<meta name="theme-color" content="#07060f">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-180.png">
+<title>Quest Log</title>
+<style>
+  :root{
+    --bg:#07060f; --card:#120f24; --card2:#1c1736; --text:#eafcff; --muted:#7f8fb0;
+    --gold:#00f0ff; --main:#ff2bd6; --side:#7dff6b; --danger:#ff4d6d;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+  body{padding:env(safe-area-inset-top) 16px calc(90px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
+  header{padding:18px 0 8px}
+  .hero{display:flex;align-items:center;gap:12px}
+  .lvl{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--main));
+    color:#001418;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;line-height:1}
+  .lvl small{font-size:10px;letter-spacing:.08em}
+  .lvl span{font-size:22px}
+  .xpwrap{flex:1}
+  .xprow{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .bar{height:10px;border-radius:99px;background:var(--card2);overflow:hidden}
+  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--main));border-radius:99px;transition:width .4s}
+  .streak{font-size:13px;color:var(--gold);margin-top:8px}
+  h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:26px 0 10px}
+  .card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:12px}
+  .current{border:2px solid var(--gold);background:linear-gradient(160deg,#1a1440,#120f24)}
+  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 9px;border-radius:99px;margin-bottom:8px}
+  .tag.main{background:rgba(255,43,214,.16);color:var(--main)}
+  .tag.side{background:rgba(125,255,107,.14);color:var(--side)}
+  .qhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .qhead .tag{margin:0}
+  .qicon{display:inline-flex;width:34px;height:34px;flex:none;filter:drop-shadow(0 0 6px currentColor)}
+  .qicon svg{width:100%;height:100%}
+  .qicon.main{color:var(--main)}
+  .qicon.side{color:var(--side)}
+  .qicon.sm{width:24px;height:24px}
+  .qtitle{font-size:19px;font-weight:700;margin:0 0 4px}
+  .next{font-size:14px;color:var(--muted);margin:4px 0 12px}
+  .next b{color:var(--text)}
+  button{font:inherit;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;color:var(--text);background:var(--card2)}
+  button.primary{background:var(--gold);color:#001418}
+  button.ghost{background:transparent;color:var(--muted);padding:8px}
+  button.danger{color:var(--danger)}
+  .row{display:flex;gap:8px;align-items:center}
+  .grow{flex:1}
+  .step{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.06)}
+  .step:first-of-type{border-top:0}
+  .chk{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);flex:none;display:flex;align-items:center;justify-content:center;background:transparent;padding:0;font-size:16px;color:#001418}
+  .step.done .chk{background:var(--side);border-color:var(--side)}
+  .step.done .txt{text-decoration:line-through;color:var(--muted)}
+  .txt{flex:1;font-size:15px}
+  .prog{font-size:12px;color:var(--muted)}
+  input,select{font:inherit;width:100%;padding:12px;border-radius:12px;border:2px solid transparent;background:var(--card2);color:var(--text);outline:0}
+  input:focus,select:focus{border-color:var(--main)}
+  .fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;
+    background:var(--gold);color:#001418;font-size:32px;padding:0;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  dialog{border:0;border-radius:22px;background:var(--card);color:var(--text);width:min(92vw,520px);padding:20px}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  .empty{text-align:center;color:var(--muted);padding:28px 10px}
+  .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-120px);background:var(--gold);color:#001418;
+    font-weight:800;padding:12px 18px;border-radius:99px;transition:transform .35s;z-index:99}
+  .toast.show{transform:translate(-50%,0)}
+  label{font-size:12px;color:var(--muted);display:block;margin:12px 0 6px}
+  .stepinputs input{margin-bottom:8px}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+
+<header>
+  <div class="hero">
+    <div class="lvl"><small>LVL</small><span id="lvl">1</span></div>
+    <div class="xpwrap">
+      <div class="xprow"><span id="xptext">0 / 100 XP</span><span id="total"></span></div>
+      <div class="bar"><i id="xpbar" style="width:0%"></i></div>
+    </div>
+  </div>
+  <div class="streak" id="streak"></div>
+</header>
+
+<h2>Current quest</h2>
+<div id="current"></div>
+
+<h2>Main quests</h2>
+<div id="mains"></div>
+
+<h2>Side quests</h2>
+<div id="sides"></div>
+
+<h2>Completed</h2>
+<div id="done"></div>
+
+<div class="row" style="margin-top:20px">
+  <button class="ghost grow" id="notifBtn">🔔 Turn on notifications</button>
+</div>
+
+<button class="fab" id="addBtn" aria-label="New quest">+</button>
+
+<dialog id="dlg">
+  <form method="dialog" id="form">
+    <h3 style="margin:0 0 4px">New quest</h3>
+    <label for="qname">Quest name</label>
+    <input id="qname" placeholder="e.g. Get my apartment organized" required autocomplete="off">
+    <label for="qtype">Type</label>
+    <select id="qtype">
+      <option value="main">Main quest (big goal, 50 XP bonus)</option>
+      <option value="side">Side quest (quick win, 15 XP bonus)</option>
+    </select>
+    <label>Steps (tiny ones work best)</label>
+    <div class="stepinputs" id="stepinputs"></div>
+    <button type="button" class="ghost" id="moreStep">+ add another step</button>
+    <div class="row" style="margin-top:14px">
+      <button type="button" class="grow" id="cancel">Cancel</button>
+      <button type="submit" class="primary grow" id="save" value="save">Start quest</button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function(){
+  var KEY = 'questlog.v1';
+  var state = load();
+
+  function load(){
+    try{
+      var s = JSON.parse(localStorage.getItem(KEY));
+      if(s && s.quests) return s;
+    }catch(e){}
+    return {quests:[], xp:0, streak:0, lastDay:null, currentId:null};
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  }
+  function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+  function today(){
+    var d = new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function yesterday(){
+    var d = new Date(); d.setDate(d.getDate()-1);
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  }
+  function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+
+  // Quest markers: a hexagon with "!" for main quests, a crosshair diamond for side quests
+  var ICONS = {
+    main: '<svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="21.5" y="12" width="5" height="16" rx="2" fill="currentColor"/><circle cx="24" cy="34" r="3.2" fill="currentColor"/></svg>',
+    side: '<svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,5 43,24 24,43 5,24" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M24 13v6M24 29v6M13 24h6M29 24h6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="24" r="3" fill="currentColor"/></svg>'
+  };
+  function qicon(type, small){ return '<span class="qicon '+type+(small?' sm':'')+'">'+ICONS[type]+'</span>'; }
+
+  // XP / levels: each level needs 100 XP more than the last chunk (100, 200, 300 ...)
+  function levelInfo(xp){
+    var lvl=1, need=100, left=xp;
+    while(left>=need){ left-=need; lvl++; need+=100; }
+    return {lvl:lvl, into:left, need:need};
+  }
+
+  function toast(msg){
+    var t=document.getElementById('toast');
+    t.textContent=msg; t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show');},2200);
+  }
+
+  function addXP(n, reason){
+    var before = levelInfo(state.xp).lvl;
+    state.xp += n;
+    var after = levelInfo(state.xp).lvl;
+    if(after>before) toast('⬆️ Level '+after+'! +'+n+' XP');
+    else toast('+'+n+' XP  '+reason);
+  }
+
+  function bumpStreak(){
+    var t=today();
+    if(state.lastDay===t) return;
+    state.streak = (state.lastDay===yesterday()) ? state.streak+1 : 1;
+    state.lastDay = t;
+  }
+
+  function isDone(q){ return q.steps.length>0 && q.steps.every(function(s){return s.done;}); }
+  function nextStep(q){ return q.steps.find(function(s){return !s.done;}); }
+  function active(){ return state.quests.filter(function(q){return !q.completed;}); }
+
+  function pickCurrent(){
+    var a = active();
+    var cur = a.find(function(q){return q.id===state.currentId;});
+    if(!cur){ cur = a.find(function(q){return q.type==='main';}) || a[0]; }
+    state.currentId = cur ? cur.id : null;
+    return cur;
+  }
+
+  function toggleStep(qid, sid){
+    var q = state.quests.find(function(x){return x.id===qid;});
+    var s = q.steps.find(function(x){return x.id===sid;});
+    if(s.done){ s.done=false; save(); render(); return; }
+    s.done = true;
+    bumpStreak();
+    addXP(10,'step done');
+    if(isDone(q)){
+      q.completed = true;
+      var bonus = q.type==='main' ? 50 : 15;
+      setTimeout(function(){ addXP(bonus,'quest complete!'); save(); render(); }, 900);
+    }
+    save(); render();
+  }
+
+  function stepsHTML(q){
+    return q.steps.map(function(s){
+      return '<div class="step '+(s.done?'done':'')+'">'+
+        '<button class="chk" data-q="'+q.id+'" data-s="'+s.id+'" aria-label="toggle step">'+(s.done?'✓':'')+'</button>'+
+        '<div class="txt">'+esc(s.text)+'</div></div>';
+    }).join('');
+  }
+
+  function questCard(q, isCurrent){
+    var done = q.steps.filter(function(s){return s.done;}).length;
+    var ns = nextStep(q);
+    var html = '<div class="card '+(isCurrent?'current':'')+'">'+
+      '<div class="qhead">'+qicon(q.type)+'<span class="tag '+q.type+'">'+(q.type==='main'?'MAIN QUEST':'SIDE QUEST')+'</span></div>'+
+      '<h3 class="qtitle">'+esc(q.name)+'</h3>'+
+      '<div class="prog">'+done+' of '+q.steps.length+' steps</div>';
+    if(isCurrent && ns){
+      html += '<div class="next">Next step: <b>'+esc(ns.text)+'</b></div>';
+    }
+    html += stepsHTML(q);
+    html += '<div class="row" style="margin-top:8px">';
+    if(!isCurrent) html += '<button data-focus="'+q.id+'" class="grow">Make current</button>';
+    html += '<button class="ghost danger" data-del="'+q.id+'">Delete</button></div></div>';
+    return html;
+  }
+
+  function render(){
+    var li = levelInfo(state.xp);
+    document.getElementById('lvl').textContent = li.lvl;
+    document.getElementById('xptext').textContent = li.into+' / '+li.need+' XP';
+    document.getElementById('xpbar').style.width = Math.round(li.into/li.need*100)+'%';
+    document.getElementById('total').textContent = state.xp+' total';
+    var sk = document.getElementById('streak');
+    var live = state.lastDay===today() || state.lastDay===yesterday();
+    sk.textContent = (state.streak>0 && live) ? '🔥 '+state.streak+'-day streak' : 'Finish a step today to start a streak';
+
+    var cur = pickCurrent();
+    var a = active();
+    document.getElementById('current').innerHTML = cur ? questCard(cur,true) :
+      '<div class="card empty">No active quest.<br>Tap + to start one.</div>';
+    var mains = a.filter(function(q){return q.type==='main' && q!==cur;});
+    var sides = a.filter(function(q){return q.type==='side' && q!==cur;});
+    document.getElementById('mains').innerHTML = mains.length ? mains.map(function(q){return questCard(q,false);}).join('') :
+      '<div class="empty">None waiting</div>';
+    document.getElementById('sides').innerHTML = sides.length ? sides.map(function(q){return questCard(q,false);}).join('') :
+      '<div class="empty">None waiting</div>';
+    var dn = state.quests.filter(function(q){return q.completed;});
+    document.getElementById('done').innerHTML = dn.length ? dn.map(function(q){
+      return '<div class="card"><div class="qhead">'+qicon(q.type,true)+'<span class="tag '+q.type+'">'+(q.type==='main'?'MAIN':'SIDE')+'</span> <span>✅ '+esc(q.name)+'</span></div>'+
+        '<div class="row"><span class="grow"></span><button class="ghost danger" data-del="'+q.id+'">Remove</button></div></div>';
+    }).join('') : '<div class="empty">Nothing yet. Go get one!</div>';
+    updateBadge(cur);
+  }
+
+  // Shows the current quest's remaining steps on the app icon where supported
+  function updateBadge(cur){
+    try{
+      if(navigator.setAppBadge){
+        var n = cur ? cur.steps.filter(function(s){return !s.done;}).length : 0;
+        if(n>0) navigator.setAppBadge(n); else navigator.clearAppBadge();
+      }
+    }catch(e){}
+  }
+
+  document.body.addEventListener('click', function(e){
+    var t = e.target.closest('button'); if(!t) return;
+    if(t.dataset.q){ toggleStep(t.dataset.q, t.dataset.s); }
+    else if(t.dataset.focus){ state.currentId=t.dataset.focus; save(); render(); window.scrollTo(0,0); }
+    else if(t.dataset.del){
+      if(confirm('Delete this quest?')){
+        state.quests = state.quests.filter(function(q){return q.id!==t.dataset.del;});
+        save(); render();
+      }
+    }
+  });
+
+  // --- New quest dialog ---
+  var dlg = document.getElementById('dlg');
+  var stepWrap = document.getElementById('stepinputs');
+  function addStepInput(){
+    var i = document.createElement('input');
+    i.placeholder = 'Step '+(stepWrap.children.length+1);
+    i.autocomplete='off';
+    stepWrap.appendChild(i);
+  }
+  document.getElementById('addBtn').onclick = function(){
+    document.getElementById('qname').value='';
+    stepWrap.innerHTML=''; addStepInput(); addStepInput(); addStepInput();
+    dlg.showModal();
+  };
+  document.getElementById('moreStep').onclick = addStepInput;
+  document.getElementById('cancel').onclick = function(){ dlg.close(); };
+  document.getElementById('form').addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = document.getElementById('qname').value.trim();
+    if(!name) return;
+    var steps = Array.prototype.map.call(stepWrap.children, function(i){return i.value.trim();})
+      .filter(Boolean).map(function(t){return {id:uid(), text:t, done:false};});
+    if(!steps.length) steps=[{id:uid(), text:'Get started', done:false}];
+    var q = {id:uid(), name:name, type:document.getElementById('qtype').value, steps:steps, completed:false};
+    state.quests.push(q);
+    if(!state.currentId || q.type==='main' && !active().some(function(x){return x.id===state.currentId && x.type==='main';})) state.currentId=q.id;
+    save(); dlg.close(); render();
+  });
+
+  // --- Notifications ---
+  // iOS only allows notifications for web apps installed to the Home Screen,
+  // and a plain web app can't schedule one while it's closed (that needs a
+  // push server). For now the button asks permission and sends the current
+  // quest as a notification on demand.
+  var nb = document.getElementById('notifBtn');
+  function notifLabel(){
+    if(!('Notification' in window)){ nb.textContent='🔔 Notifications need Add to Home Screen (iOS 16.4+)'; return; }
+    nb.textContent = Notification.permission==='granted' ? '🔔 Notifications on (tap to send a test)' : '🔔 Turn on notifications';
+  }
+  nb.onclick = function(){
+    if(!('Notification' in window)){ alert('On iPhone, first use Share → Add to Home Screen, then open the app from your Home Screen.'); return; }
+    Notification.requestPermission().then(function(p){
+      notifLabel();
+      if(p==='granted') sendQuestNotification();
+    });
+  };
+  function sendQuestNotification(){
+    var cur = pickCurrent(); if(!cur) return;
+    var ns = nextStep(cur);
+    var title = '⚔️ '+cur.name;
+    var body = ns ? 'Next step: '+ns.text : 'Quest ready to finish!';
+    if(navigator.serviceWorker && navigator.serviceWorker.ready){
+      navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(title,{body:body,icon:'icon-192.png',tag:'current-quest'}); });
+    }
+  }
+  notifLabel();
+
+  // When you come back to the app, refresh the badge
+  document.addEventListener('visibilitychange', function(){ if(!document.hidden) render(); });
+
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
