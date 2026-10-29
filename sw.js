@@ -1,6 +1,7 @@
-// Caches the app so it opens instantly and works offline.
-// Bump CACHE when you change index.html so phones pick up the new version.
-var CACHE = 'questlog-v4';
+// Network-first: always try to load the newest files, and fall back to the
+// cached copy only when offline. This means updates show up without any
+// version bumping. (Bumping CACHE still clears old caches, so it doesn't hurt.)
+var CACHE = 'questlog-v5';
 var FILES = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', function (e) {
@@ -20,8 +21,12 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   if (e.request.method !== 'GET') return;
   e.respondWith(
-    caches.match(e.request).then(function (hit) {
-      return hit || fetch(e.request);
-    })
+    fetch(e.request)
+      .then(function (res) {
+        var copy = res.clone();
+        caches.open(CACHE).then(function (c) { c.put(e.request, copy); });
+        return res;
+      })
+      .catch(function () { return caches.match(e.request); })
   );
 });
