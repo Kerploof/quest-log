@@ -13,102 +13,144 @@
 <title>Quest Log</title>
 <style>
   :root{
-    --bg:#07060f; --card:#120f24; --card2:#1c1736; --text:#eafcff; --muted:#7f8fb0;
-    --gold:#00f0ff; --main:#ff2bd6; --side:#7dff6b; --danger:#ff4d6d;
+    --bg:#08040a; --card:#14070d; --card2:#1d0b13;
+    --red:#ff3a4f; --redline:#7a1a2a; --reddim:#3a0f19;
+    --cyan:#3ff0f8; --cyandim:#14565b;
+    --yellow:#ffd83a; --green:#6bff8a;
+    --text:#ffd9dd; --muted:#a8636d;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;background:var(--bg);color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-  body{padding:env(safe-area-inset-top) 16px calc(90px + env(safe-area-inset-bottom));max-width:560px;margin:0 auto}
-  header{padding:18px 0 8px}
-  .hero{display:flex;align-items:center;gap:12px}
-  .lvl{width:54px;height:54px;border-radius:16px;background:linear-gradient(135deg,var(--gold),var(--main));
-    color:#001418;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;line-height:1}
-  .lvl small{font-size:10px;letter-spacing:.08em}
-  .lvl span{font-size:22px}
-  .xpwrap{flex:1}
-  .xprow{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
-  .bar{height:10px;border-radius:99px;background:var(--card2);overflow:hidden}
-  .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--main));border-radius:99px;transition:width .4s}
-  .streak{font-size:13px;color:var(--gold);margin-top:8px}
-  h2{font-size:13px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:26px 0 10px}
-  .card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:12px}
-  .current{border:2px solid var(--gold);background:linear-gradient(160deg,#1a1440,#120f24)}
-  .tag{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 9px;border-radius:99px;margin-bottom:8px}
-  .tag.main{background:rgba(255,43,214,.16);color:var(--main)}
-  .tag.side{background:rgba(125,255,107,.14);color:var(--side)}
-  .qhead{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-  .qhead .tag{margin:0}
+    font-family:"Bahnschrift","Arial Narrow","Roboto Condensed",-apple-system,"Segoe UI",sans-serif}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(120% 60% at 50% -10%, rgba(255,58,79,.16), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,58,79,.035) 0 1px, transparent 1px 4px),
+      var(--bg);
+    padding:env(safe-area-inset-top) 0 calc(84px + env(safe-area-inset-bottom));
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 14px}
+  .upper{text-transform:uppercase;letter-spacing:.14em}
+
+  /* top rail */
+  .rail{height:2px;background:linear-gradient(90deg,transparent,var(--red) 12%,var(--red) 88%,transparent);box-shadow:0 0 10px var(--red);margin-top:6px}
+  nav{display:flex;align-items:center;gap:6px;padding:10px 0 4px}
+  .key{flex:none;min-width:24px;height:24px;border:1px solid var(--cyan);color:var(--cyan);font-size:12px;display:flex;align-items:center;justify-content:center;padding:0 5px}
+  .tabs{flex:1;display:flex;justify-content:space-between}
+  .tab{background:none;border:0;color:var(--muted);font:inherit;font-size:12px;text-transform:uppercase;letter-spacing:.14em;
+    padding:8px 6px;position:relative;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .tab svg{width:14px;height:14px}
+  .tab.on{color:var(--cyan);text-shadow:0 0 8px rgba(63,240,248,.7)}
+  .tab.on::after{content:'';position:absolute;left:4px;right:4px;bottom:0;height:2px;background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+
+  /* stat strip */
+  .stats{display:flex;align-items:center;gap:10px;padding:12px 0 6px}
+  .chip{display:flex;align-items:center;gap:6px;font-size:12px;text-transform:uppercase;letter-spacing:.1em}
+  .chip b{font-size:20px;letter-spacing:0;font-weight:700}
+  .chip.lvl{color:var(--cyan)} .chip.lvl b{border:1px solid var(--cyan);padding:0 8px;line-height:26px}
+  .chip.str{color:var(--green)} .chip.str b{border:1px solid var(--green);padding:0 8px;line-height:26px}
+  .xp{margin-left:auto;text-align:right;color:var(--red);font-size:13px;letter-spacing:.08em}
+  .xp b{font-size:18px;letter-spacing:0}
+  .xpbar{height:4px;background:var(--reddim);margin:4px 0 6px;position:relative}
+  .xpbar i{display:block;height:100%;background:var(--red);box-shadow:0 0 8px var(--red);transition:width .4s}
+
+  h2{font-size:12px;font-weight:400;color:var(--muted);margin:22px 0 10px;display:flex;align-items:center;gap:10px}
+  h2::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--redline),transparent)}
+
+  /* cut-corner card with diagonal stroke */
+  .card{--line:var(--redline);--cut:14px;position:relative;margin-bottom:12px;padding:14px 16px;background:var(--line);
+    clip-path:polygon(0 0,calc(100% - var(--cut)) 0,100% var(--cut),100% 100%,var(--cut) 100%,0 calc(100% - var(--cut)))}
+  .card::before{content:'';position:absolute;inset:1px;background:linear-gradient(160deg,var(--card2),var(--card));
+    clip-path:polygon(0 0,calc(100% - var(--cut) + 1px) 0,100% calc(var(--cut) - 1px),100% 100%,calc(var(--cut) - 1px) 100%,0 calc(100% - var(--cut) + 1px))}
+  .card>*{position:relative;z-index:1}
+  .card.current{--line:var(--cyan);filter:drop-shadow(0 0 10px rgba(63,240,248,.28))}
+
+  .qhead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
   .qicon{display:inline-flex;width:34px;height:34px;flex:none;filter:drop-shadow(0 0 6px currentColor)}
   .qicon svg{width:100%;height:100%}
-  .qicon.main{color:var(--main)}
-  .qicon.side{color:var(--side)}
-  .qicon.sm{width:24px;height:24px}
-  .qtitle{font-size:19px;font-weight:700;margin:0 0 4px}
-  .next{font-size:14px;color:var(--muted);margin:4px 0 12px}
-  .next b{color:var(--text)}
-  button{font:inherit;border:0;border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;color:var(--text);background:var(--card2)}
-  button.primary{background:var(--gold);color:#001418}
-  button.ghost{background:transparent;color:var(--muted);padding:8px}
-  button.danger{color:var(--danger)}
-  .row{display:flex;gap:8px;align-items:center}
-  .grow{flex:1}
-  .step{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid rgba(255,255,255,.06)}
+  .qicon.main{color:var(--yellow)} .qicon.side{color:var(--cyan)}
+  .qicon.sm{width:22px;height:22px}
+  .tag{font-size:11px;letter-spacing:.16em;text-transform:uppercase}
+  .tag.main{color:var(--yellow)} .tag.side{color:var(--cyan)}
+  .now{margin-left:auto;font-size:10px;letter-spacing:.18em;color:#021;background:var(--cyan);padding:2px 7px}
+  .qtitle{font-size:21px;font-weight:700;margin:2px 0 2px;text-transform:uppercase;letter-spacing:.04em}
+  .prog{font-size:12px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+  .meter{display:flex;gap:3px;margin:8px 0 10px}
+  .meter i{flex:1;height:4px;background:var(--reddim)}
+  .meter i.on{background:var(--red);box-shadow:0 0 6px var(--red)}
+  .next{font-size:14px;margin:6px 0 10px;color:var(--muted);border-left:2px solid var(--cyan);padding-left:10px}
+  .next b{display:block;color:var(--text);font-size:16px;font-weight:600}
+
+  /* steps as menu rows */
+  .step{display:flex;align-items:center;gap:12px;padding:10px 8px;margin:0 -8px;border-top:1px solid rgba(255,58,79,.14);cursor:pointer}
   .step:first-of-type{border-top:0}
-  .chk{width:26px;height:26px;border-radius:8px;border:2px solid var(--muted);flex:none;display:flex;align-items:center;justify-content:center;background:transparent;padding:0;font-size:16px;color:#001418}
-  .step.done .chk{background:var(--side);border-color:var(--side)}
-  .step.done .txt{text-decoration:line-through;color:var(--muted)}
+  .step:active{background:rgba(255,58,79,.14)}
+  .chk{width:22px;height:22px;flex:none;border:1px solid var(--red);display:flex;align-items:center;justify-content:center;color:#08040a;font-size:14px;font-weight:700;background:transparent;padding:0}
+  .step.done .chk{background:var(--green);border-color:var(--green)}
+  .step.done .txt{color:var(--muted);text-decoration:line-through}
   .txt{flex:1;font-size:15px}
-  .prog{font-size:12px;color:var(--muted)}
-  input,select{font:inherit;width:100%;padding:12px;border-radius:12px;border:2px solid transparent;background:var(--card2);color:var(--text);outline:0}
-  input:focus,select:focus{border-color:var(--main)}
-  .fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;
-    background:var(--gold);color:#001418;font-size:32px;padding:0;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-  dialog{border:0;border-radius:22px;background:var(--card);color:var(--text);width:min(92vw,520px);padding:20px}
-  dialog::backdrop{background:rgba(0,0,0,.6)}
-  .empty{text-align:center;color:var(--muted);padding:28px 10px}
-  .toast{position:fixed;left:50%;top:calc(16px + env(safe-area-inset-top));transform:translate(-50%,-120px);background:var(--gold);color:#001418;
-    font-weight:800;padding:12px 18px;border-radius:99px;transition:transform .35s;z-index:99}
-  .toast.show{transform:translate(-50%,0)}
-  label{font-size:12px;color:var(--muted);display:block;margin:12px 0 6px}
+
+  button{font:inherit;cursor:pointer}
+  .btn{background:transparent;color:var(--cyan);border:1px solid var(--cyan);padding:10px 14px;text-transform:uppercase;letter-spacing:.14em;font-size:12px;
+    clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+  .btn:not(.solid){clip-path:none}
+  .btn.solid{background:var(--cyan);color:#021014;font-weight:700}
+  .btn.red{color:var(--red);border-color:var(--red)}
+  .btn.ghost{border-color:transparent;color:var(--muted)}
+  .row{display:flex;gap:8px;align-items:center;margin-top:10px}
+  .grow{flex:1}
+  .empty{color:var(--muted);text-align:center;padding:26px 10px;font-size:13px;letter-spacing:.12em;text-transform:uppercase;border:1px dashed var(--redline)}
+
+  /* bottom hint bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(0deg,var(--bg) 60%,transparent);}
+  .bar .in{max-width:560px;margin:0 auto;display:flex;align-items:center;gap:10px;border-top:1px solid var(--redline);padding-top:10px}
+  .hint{flex:1;font-size:11px;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}
+  .hint b{color:var(--cyan);border:1px solid var(--cyandim);padding:0 5px;margin-right:6px;font-weight:400}
+
+  dialog{border:0;background:transparent;color:var(--text);width:min(92vw,520px);padding:0;max-height:90vh;overflow:auto}
+  dialog::backdrop{background:rgba(4,0,2,.82)}
+  .dlg{--line:var(--cyan)}
+  label{font-size:11px;color:var(--muted);display:block;margin:14px 0 6px;letter-spacing:.16em;text-transform:uppercase}
+  input,select{font:inherit;width:100%;padding:11px 12px;background:#0b0408;color:var(--text);border:1px solid var(--redline);outline:0;border-radius:0}
+  input:focus,select:focus{border-color:var(--cyan);box-shadow:0 0 8px rgba(63,240,248,.3)}
   .stepinputs input{margin-bottom:8px}
+
+  .toast{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translate(-50%,-140px);background:var(--yellow);color:#201800;
+    font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:13px;padding:10px 18px;transition:transform .35s;z-index:99;
+    clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px))}
+  .toast.show{transform:translate(-50%,0)}
 </style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
+<div class="wrap">
+  <div class="rail"></div>
+  <nav>
+    <span class="key">1</span>
+    <div class="tabs" id="tabs"></div>
+    <span class="key">3</span>
+  </nav>
 
-<header>
-  <div class="hero">
-    <div class="lvl"><small>LVL</small><span id="lvl">1</span></div>
-    <div class="xpwrap">
-      <div class="xprow"><span id="xptext">0 / 100 XP</span><span id="total"></span></div>
-      <div class="bar"><i id="xpbar" style="width:0%"></i></div>
-    </div>
+  <div class="stats">
+    <div class="chip lvl"><span>Level</span><b id="lvl">1</b></div>
+    <div class="chip str"><span>Streak</span><b id="streakn">0</b></div>
+    <div class="xp"><b id="xpnow">0</b> / <span id="xpneed">100</span> XP</div>
   </div>
-  <div class="streak" id="streak"></div>
-</header>
+  <div class="xpbar"><i id="xpbar" style="width:0%"></i></div>
 
-<h2>Current quest</h2>
-<div id="current"></div>
-
-<h2>Main quests</h2>
-<div id="mains"></div>
-
-<h2>Side quests</h2>
-<div id="sides"></div>
-
-<h2>Completed</h2>
-<div id="done"></div>
-
-<div class="row" style="margin-top:20px">
-  <button class="ghost grow" id="notifBtn">🔔 Turn on notifications</button>
+  <main id="view"></main>
 </div>
 
-<button class="fab" id="addBtn" aria-label="New quest">+</button>
+<div class="bar"><div class="in">
+  <div class="hint"><b>TAP</b>step to complete</div>
+  <button class="btn solid" id="addBtn">+ New quest</button>
+</div></div>
 
 <dialog id="dlg">
-  <form method="dialog" id="form">
-    <h3 style="margin:0 0 4px">New quest</h3>
+  <form method="dialog" id="form" class="card dlg" style="margin:0;--cut:18px">
+    <div class="tag main" style="margin-bottom:4px">New quest</div>
     <label for="qname">Quest name</label>
     <input id="qname" placeholder="e.g. Get my apartment organized" required autocomplete="off">
     <label for="qtype">Type</label>
@@ -118,10 +160,10 @@
     </select>
     <label>Steps (tiny ones work best)</label>
     <div class="stepinputs" id="stepinputs"></div>
-    <button type="button" class="ghost" id="moreStep">+ add another step</button>
+    <button type="button" class="btn ghost" id="moreStep">+ add another step</button>
     <div class="row" style="margin-top:14px">
-      <button type="button" class="grow" id="cancel">Cancel</button>
-      <button type="submit" class="primary grow" id="save" value="save">Start quest</button>
+      <button type="button" class="btn red grow" id="cancel">Cancel</button>
+      <button type="submit" class="btn solid grow" value="save">Start quest</button>
     </div>
   </form>
 </dialog>
@@ -130,6 +172,8 @@
 (function(){
   var KEY = 'questlog.v1';
   var state = load();
+  var tab = 'current';
+  try{ tab = localStorage.getItem('questlog.tab') || 'current'; }catch(e){}
 
   function load(){
     try{
@@ -138,48 +182,43 @@
     }catch(e){}
     return {quests:[], xp:0, streak:0, lastDay:null, currentId:null};
   }
-  function save(){
-    try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
-  }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
   function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
-  function today(){
-    var d = new Date();
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
-  function yesterday(){
-    var d = new Date(); d.setDate(d.getDate()-1);
-    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-  }
+  function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  function today(){ return ymd(new Date()); }
+  function yesterday(){ var d=new Date(); d.setDate(d.getDate()-1); return ymd(d); }
   function esc(s){ var d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 
-  // Quest markers: a hexagon with "!" for main quests, a crosshair diamond for side quests
+  // Original quest markers: hex + double chevron (main), diamond + crosshair (side)
   var ICONS = {
-    main: '<svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><rect x="21.5" y="12" width="5" height="16" rx="2" fill="currentColor"/><circle cx="24" cy="34" r="3.2" fill="currentColor"/></svg>',
+    main: '<svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,3 42,13.5 42,34.5 24,45 6,34.5 6,13.5" fill="currentColor" fill-opacity=".14" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M13 27l11-10 11 10M13 35l11-10 11 10" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     side: '<svg viewBox="0 0 48 48" aria-hidden="true"><polygon points="24,5 43,24 24,43 5,24" fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M24 13v6M24 29v6M13 24h6M29 24h6" stroke="currentColor" stroke-width="3" stroke-linecap="round"/><circle cx="24" cy="24" r="3" fill="currentColor"/></svg>'
   };
   function qicon(type, small){ return '<span class="qicon '+type+(small?' sm':'')+'">'+ICONS[type]+'</span>'; }
 
-  // XP / levels: each level needs 100 XP more than the last chunk (100, 200, 300 ...)
+  var TABS = [
+    {id:'current', label:'Current'},
+    {id:'main',    label:'Main'},
+    {id:'side',    label:'Side'},
+    {id:'done',    label:'Done'}
+  ];
+
   function levelInfo(xp){
     var lvl=1, need=100, left=xp;
     while(left>=need){ left-=need; lvl++; need+=100; }
     return {lvl:lvl, into:left, need:need};
   }
-
   function toast(msg){
     var t=document.getElementById('toast');
     t.textContent=msg; t.classList.add('show');
     setTimeout(function(){t.classList.remove('show');},2200);
   }
-
   function addXP(n, reason){
     var before = levelInfo(state.xp).lvl;
     state.xp += n;
     var after = levelInfo(state.xp).lvl;
-    if(after>before) toast('⬆️ Level '+after+'! +'+n+' XP');
-    else toast('+'+n+' XP  '+reason);
+    toast(after>before ? 'Level '+after+'  +'+n+' XP' : '+'+n+' XP  '+reason);
   }
-
   function bumpStreak(){
     var t=today();
     if(state.lastDay===t) return;
@@ -190,7 +229,6 @@
   function isDone(q){ return q.steps.length>0 && q.steps.every(function(s){return s.done;}); }
   function nextStep(q){ return q.steps.find(function(s){return !s.done;}); }
   function active(){ return state.quests.filter(function(q){return !q.completed;}); }
-
   function pickCurrent(){
     var a = active();
     var cur = a.find(function(q){return q.id===state.currentId;});
@@ -209,65 +247,93 @@
     if(isDone(q)){
       q.completed = true;
       var bonus = q.type==='main' ? 50 : 15;
-      setTimeout(function(){ addXP(bonus,'quest complete!'); save(); render(); }, 900);
+      setTimeout(function(){ addXP(bonus,'quest complete'); save(); render(); }, 900);
     }
     save(); render();
   }
 
   function stepsHTML(q){
     return q.steps.map(function(s){
-      return '<div class="step '+(s.done?'done':'')+'">'+
-        '<button class="chk" data-q="'+q.id+'" data-s="'+s.id+'" aria-label="toggle step">'+(s.done?'✓':'')+'</button>'+
-        '<div class="txt">'+esc(s.text)+'</div></div>';
+      return '<div class="step '+(s.done?'done':'')+'" data-q="'+q.id+'" data-s="'+s.id+'">'+
+        '<span class="chk">'+(s.done?'✓':'')+'</span><div class="txt">'+esc(s.text)+'</div></div>';
     }).join('');
+  }
+  function meterHTML(q){
+    return '<div class="meter">'+q.steps.map(function(s){return '<i class="'+(s.done?'on':'')+'"></i>';}).join('')+'</div>';
   }
 
   function questCard(q, isCurrent){
     var done = q.steps.filter(function(s){return s.done;}).length;
     var ns = nextStep(q);
-    var html = '<div class="card '+(isCurrent?'current':'')+'">'+
-      '<div class="qhead">'+qicon(q.type)+'<span class="tag '+q.type+'">'+(q.type==='main'?'MAIN QUEST':'SIDE QUEST')+'</span></div>'+
+    var h = '<div class="card '+(isCurrent?'current':'')+'">'+
+      '<div class="qhead">'+qicon(q.type)+'<span class="tag '+q.type+'">'+(q.type==='main'?'Main quest':'Side quest')+'</span>'+
+      (isCurrent?'<span class="now">ACTIVE</span>':'')+'</div>'+
       '<h3 class="qtitle">'+esc(q.name)+'</h3>'+
-      '<div class="prog">'+done+' of '+q.steps.length+' steps</div>';
-    if(isCurrent && ns){
-      html += '<div class="next">Next step: <b>'+esc(ns.text)+'</b></div>';
+      '<div class="prog">'+done+' / '+q.steps.length+' steps</div>'+meterHTML(q);
+    if(isCurrent && ns){ h += '<div class="next">Next step<b>'+esc(ns.text)+'</b></div>'; }
+    h += stepsHTML(q);
+    h += '<div class="row">';
+    if(!isCurrent) h += '<button class="btn grow" data-focus="'+q.id+'">Set active</button>';
+    h += '<button class="btn red" data-del="'+q.id+'">Delete</button></div></div>';
+    return h;
+  }
+
+  function listHTML(list, emptyMsg, curId){
+    return list.length ? list.map(function(q){return questCard(q, q.id===curId);}).join('') : '<div class="empty">'+emptyMsg+'</div>';
+  }
+
+  function viewHTML(){
+    var cur = pickCurrent();
+    var a = active();
+    var curId = cur ? cur.id : null;
+    if(tab==='current'){
+      var h = '<h2 class="upper">Active quest</h2>';
+      h += cur ? questCard(cur,true) : '<div class="empty">No active quest<br>Tap + New quest</div>';
+      var others = a.filter(function(q){return q!==cur;});
+      if(others.length){
+        h += '<h2 class="upper">Up next</h2>';
+        h += others.map(function(q){
+          var d = q.steps.filter(function(s){return s.done;}).length;
+          return '<div class="card" style="padding:10px 14px"><div class="qhead" style="margin:0">'+qicon(q.type,true)+
+            '<div class="grow"><div class="tag '+q.type+'">'+(q.type==='main'?'Main':'Side')+'</div>'+
+            '<div style="font-size:16px;text-transform:uppercase">'+esc(q.name)+'</div>'+
+            '<div class="prog">'+d+' / '+q.steps.length+'</div></div>'+
+            '<button class="btn" data-focus="'+q.id+'">Set active</button></div></div>';
+        }).join('');
+      }
+      h += '<div class="row"><button class="btn ghost grow" id="notifBtn"></button></div>';
+      return h;
     }
-    html += stepsHTML(q);
-    html += '<div class="row" style="margin-top:8px">';
-    if(!isCurrent) html += '<button data-focus="'+q.id+'" class="grow">Make current</button>';
-    html += '<button class="ghost danger" data-del="'+q.id+'">Delete</button></div></div>';
-    return html;
+    if(tab==='main') return '<h2 class="upper">Main quests</h2>'+listHTML(a.filter(function(q){return q.type==='main';}),'No main quests',curId);
+    if(tab==='side') return '<h2 class="upper">Side quests</h2>'+listHTML(a.filter(function(q){return q.type==='side';}),'No side quests',curId);
+    var dn = state.quests.filter(function(q){return q.completed;});
+    return '<h2 class="upper">Completed</h2>'+(dn.length ? dn.map(function(q){
+      return '<div class="card" style="padding:10px 14px"><div class="qhead" style="margin:0">'+qicon(q.type,true)+
+        '<div class="grow"><div class="tag '+q.type+'">'+(q.type==='main'?'Main':'Side')+'</div><div style="text-transform:uppercase">'+esc(q.name)+'</div></div>'+
+        '<button class="btn red" data-del="'+q.id+'">Remove</button></div></div>';
+    }).join('') : '<div class="empty">Nothing completed yet</div>');
+  }
+
+  function renderTabs(){
+    document.getElementById('tabs').innerHTML = TABS.map(function(t){
+      return '<button class="tab '+(t.id===tab?'on':'')+'" data-tab="'+t.id+'">'+t.label+'</button>';
+    }).join('');
   }
 
   function render(){
     var li = levelInfo(state.xp);
     document.getElementById('lvl').textContent = li.lvl;
-    document.getElementById('xptext').textContent = li.into+' / '+li.need+' XP';
+    document.getElementById('xpnow').textContent = li.into;
+    document.getElementById('xpneed').textContent = li.need;
     document.getElementById('xpbar').style.width = Math.round(li.into/li.need*100)+'%';
-    document.getElementById('total').textContent = state.xp+' total';
-    var sk = document.getElementById('streak');
     var live = state.lastDay===today() || state.lastDay===yesterday();
-    sk.textContent = (state.streak>0 && live) ? '🔥 '+state.streak+'-day streak' : 'Finish a step today to start a streak';
-
-    var cur = pickCurrent();
-    var a = active();
-    document.getElementById('current').innerHTML = cur ? questCard(cur,true) :
-      '<div class="card empty">No active quest.<br>Tap + to start one.</div>';
-    var mains = a.filter(function(q){return q.type==='main' && q!==cur;});
-    var sides = a.filter(function(q){return q.type==='side' && q!==cur;});
-    document.getElementById('mains').innerHTML = mains.length ? mains.map(function(q){return questCard(q,false);}).join('') :
-      '<div class="empty">None waiting</div>';
-    document.getElementById('sides').innerHTML = sides.length ? sides.map(function(q){return questCard(q,false);}).join('') :
-      '<div class="empty">None waiting</div>';
-    var dn = state.quests.filter(function(q){return q.completed;});
-    document.getElementById('done').innerHTML = dn.length ? dn.map(function(q){
-      return '<div class="card"><div class="qhead">'+qicon(q.type,true)+'<span class="tag '+q.type+'">'+(q.type==='main'?'MAIN':'SIDE')+'</span> <span>✅ '+esc(q.name)+'</span></div>'+
-        '<div class="row"><span class="grow"></span><button class="ghost danger" data-del="'+q.id+'">Remove</button></div></div>';
-    }).join('') : '<div class="empty">Nothing yet. Go get one!</div>';
-    updateBadge(cur);
+    document.getElementById('streakn').textContent = live ? state.streak : 0;
+    renderTabs();
+    document.getElementById('view').innerHTML = viewHTML();
+    notifLabel();
+    updateBadge(pickCurrent());
   }
 
-  // Shows the current quest's remaining steps on the app icon where supported
   function updateBadge(cur){
     try{
       if(navigator.setAppBadge){
@@ -278,15 +344,20 @@
   }
 
   document.body.addEventListener('click', function(e){
-    var t = e.target.closest('button'); if(!t) return;
-    if(t.dataset.q){ toggleStep(t.dataset.q, t.dataset.s); }
-    else if(t.dataset.focus){ state.currentId=t.dataset.focus; save(); render(); window.scrollTo(0,0); }
-    else if(t.dataset.del){
+    var el = e.target.closest('[data-tab],[data-q],[data-focus],[data-del],#notifBtn');
+    if(!el) return;
+    if(el.dataset.tab){
+      tab = el.dataset.tab;
+      try{ localStorage.setItem('questlog.tab', tab); }catch(err){}
+      render(); window.scrollTo(0,0);
+    } else if(el.dataset.q){ toggleStep(el.dataset.q, el.dataset.s); }
+    else if(el.dataset.focus){ state.currentId=el.dataset.focus; tab='current'; save(); render(); window.scrollTo(0,0); }
+    else if(el.dataset.del){
       if(confirm('Delete this quest?')){
-        state.quests = state.quests.filter(function(q){return q.id!==t.dataset.del;});
+        state.quests = state.quests.filter(function(q){return q.id!==el.dataset.del;});
         save(); render();
       }
-    }
+    } else if(el.id==='notifBtn'){ askNotif(); }
   });
 
   // --- New quest dialog ---
@@ -319,40 +390,35 @@
   });
 
   // --- Notifications ---
-  // iOS only allows notifications for web apps installed to the Home Screen,
-  // and a plain web app can't schedule one while it's closed (that needs a
-  // push server). For now the button asks permission and sends the current
-  // quest as a notification on demand.
-  var nb = document.getElementById('notifBtn');
+  // iOS only allows these for web apps installed to the Home Screen, and a plain
+  // web app can't schedule one while closed (that needs a push server).
+  // The button asks permission and sends the current quest on demand.
   function notifLabel(){
-    if(!('Notification' in window)){ nb.textContent='🔔 Notifications need Add to Home Screen (iOS 16.4+)'; return; }
-    nb.textContent = Notification.permission==='granted' ? '🔔 Notifications on (tap to send a test)' : '🔔 Turn on notifications';
+    var nb = document.getElementById('notifBtn'); if(!nb) return;
+    if(!('Notification' in window)){ nb.textContent='Notifications need Add to Home Screen (iOS 16.4+)'; return; }
+    nb.textContent = Notification.permission==='granted' ? 'Notifications on. Tap to send a test' : 'Turn on notifications';
   }
-  nb.onclick = function(){
-    if(!('Notification' in window)){ alert('On iPhone, first use Share → Add to Home Screen, then open the app from your Home Screen.'); return; }
+  function askNotif(){
+    if(!('Notification' in window)){ alert('On iPhone, first use Share, Add to Home Screen, then open the app from your Home Screen.'); return; }
     Notification.requestPermission().then(function(p){
       notifLabel();
       if(p==='granted') sendQuestNotification();
     });
-  };
+  }
   function sendQuestNotification(){
     var cur = pickCurrent(); if(!cur) return;
     var ns = nextStep(cur);
-    var title = '⚔️ '+cur.name;
-    var body = ns ? 'Next step: '+ns.text : 'Quest ready to finish!';
+    var title = cur.name;
+    var body = ns ? 'Next step: '+ns.text : 'Quest ready to finish';
     if(navigator.serviceWorker && navigator.serviceWorker.ready){
       navigator.serviceWorker.ready.then(function(reg){ reg.showNotification(title,{body:body,icon:'icon-192.png',tag:'current-quest'}); });
     }
   }
-  notifLabel();
 
-  // When you come back to the app, refresh the badge
   document.addEventListener('visibilitychange', function(){ if(!document.hidden) render(); });
-
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
   }
-
   render();
 })();
 </script>
